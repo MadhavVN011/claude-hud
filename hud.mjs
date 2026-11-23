@@ -235,8 +235,9 @@ export async function runCage({ stdin = null, now = Date.now(), probes = async (
     });
     child.stdin.on('error', () => {});
     child.on('error', (error) => settle(error));
-    child.on('close', (code) => {
-      if (!output) return settle(new Error(`logic exited with code ${code}`));
+    child.on('close', (code, signal) => {
+      // A crash in Node itself (a vendor build's ICU, say) ends logic by signal, with no code to report.
+      if (!output) return settle(new Error(signal ? `logic was killed by ${signal}` : `logic exited with code ${code}`));
       const report = stderr.split('\n').findLast((line) => line.startsWith('claude-hud audit '));
       settle(null, audit ? { ...output, outside: report ? JSON.parse(report.slice('claude-hud audit '.length)) : ['no audit report'] } : output);
     });

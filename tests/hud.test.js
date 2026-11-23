@@ -5,7 +5,7 @@ import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { isHudDisabled } from '../hud.mjs';
+import { isHudDisabled, runCage } from '../hud.mjs';
 import { formatSessionDuration } from '../src/utils/format.ts';
 
 const entry = fileURLToPath(new URL('../hud.mjs', import.meta.url));
@@ -74,6 +74,17 @@ test('a rule linked from outside the grants skips only itself', {
     assert.match(result.stdout.replace(/\x1b\[[0-9;]*m/g, ''), /\b3 rules\b/);
   } finally {
     await rm(base, { recursive: true, force: true });
+  }
+});
+
+test('logic killed by a signal is reported by the signal, not "code null"', { skip: process.platform === 'win32' && 'no signals on Windows' }, async () => {
+  const home = await mkdtemp(path.join(tmpdir(), 'hud-signal-'));
+  try {
+    const env = { PATH: process.env.PATH, HOME: home, CLAUDE_CONFIG_DIR: path.join(home, '.claude') };
+    await assert.rejects(runCage({ env, entry: fileURLToPath(new URL('./fixtures/abort-logic.mjs', import.meta.url)) }),
+      { message: 'logic was killed by SIGABRT' });
+  } finally {
+    await rm(home, { recursive: true, force: true });
   }
 });
 
