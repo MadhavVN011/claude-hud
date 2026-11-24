@@ -13,11 +13,21 @@
     "src/",
     "skills/",
     "scripts/statusline.mjs",
+    "monitor/",
+    "scripts/monitor-linux.sh",
+    "scripts/monitor-windows.ps1",
+    "docs/monitoring.md",
+    "docs/monitoring-design.md",
+    "docs/monitoring-api.md",
+    "docs/monitoring-validation.md",
     ".claude-plugin/"
   ],
   "scripts": {
-    "typecheck": "tsc -p .",
+    "typecheck": "tsc -p . && tsc -p monitor",
     "test": "node --import ./tests/clean-env.js --test",
+    "test:monitor": "node --import ./tests/clean-env.js --test tests/monitor-*.test.js",
+    "test:monitor:browser": "node scripts/monitor-browser-check.mjs",
+    "monitor": "node monitor/cli.ts",
     "test:update-snapshots": "UPDATE_SNAPSHOTS=1 npm test",
     "test:stdin": "echo '{\"model\":{\"display_name\":\"Opus\"},\"context_window\":{\"current_usage\":{\"input_tokens\":45000},\"context_window_size\":200000},\"transcript_path\":\"/tmp/test.jsonl\"}' | node hud.mjs"
   },

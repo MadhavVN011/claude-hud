@@ -44,6 +44,10 @@ Thumbs.db
 *.key
 secrets/
 credentials/
+.claude-hud-monitor/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
 
 # Test coverage
 coverage/

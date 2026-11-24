@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Claude HUD · Device Observatory</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div id="login" class="login-layout">
+    <section class="intro">
+      <div class="brand"><span class="brand-icon">H</span> CLAUDE HUD</div>
+      <div class="eyebrow">YOUR LOCAL DEVICE OBSERVATORY</div>
+      <h1>One account.<br>Every device.<br><span>A clearer picture.</span></h1>
+      <p>Compare recorded Claude Code activity across your machines. Keep your conversations on the device where they belong.</p>
+      <div class="intro-foot">LAN hosted <span>·</span> No cloud services <span>·</span> Metrics only</div>
+    </section>
+    <form id="login-form" class="login-card">
+      <div class="eyebrow">PRIVATE WORKSPACE</div>
+      <h2>Open your dashboard</h2>
+      <p>Use the administrator token from your Linux host’s monitoring configuration.</p>
+      <label for="admin-token">Administrator token</label>
+      <input id="admin-token" type="password" required autocomplete="off" spellcheck="false">
+      <button class="primary" type="submit">Connect to observatory</button>
+      <p id="login-error" class="error" role="alert"></p>
+      <small>The token stays in this tab’s memory. HTTP on a LAN is unencrypted; use HTTPS or a private tunnel on untrusted networks.</small>
+    </form>
+  </div>
+  <div id="workspace" class="workspace" hidden>
+    <aside class="sidebar">
+      <a href="#overview" class="brand"><span class="brand-icon">H</span> CLAUDE HUD</a>
+      <div class="workspace-label">DEVICE OBSERVATORY</div>
+      <nav aria-label="Main navigation">
+        <a href="#overview" data-route="overview"><span>◫</span> Overview</a>
+        <a href="#devices" data-route="devices"><span>▣</span> Devices</a>
+        <a href="#analytics" data-route="analytics"><span>▥</span> Usage analytics</a>
+        <a href="#manage" data-route="manage"><span>⚙</span> Management</a>
+      </nav>
+      <div class="sidebar-bottom"><span class="privacy-mark">LOCAL / PRIVATE</span><p>Measured activity and account allowance, clearly separated.</p><button id="logout" class="subtle">Lock dashboard</button></div>
+    </aside>
+    <main>
+      <header class="page-header">
+        <div><div class="eyebrow">CLAUDE CODE / MULTI-DEVICE</div><h1 id="page-title">Usage overview</h1><p id="page-description">Your machines, working together. A shared view of recorded activity.</p></div>
+        <div class="refresh-area"><span id="updated" role="status">Connecting…</span><button id="refresh" class="subtle">Refresh</button></div>
+      </header>
+      <div id="app-error" class="error banner" role="alert" hidden></div>
+      <section class="toolbar" aria-label="Analytics filters">
+        <label>Activity window<select id="window"><option value="5h">Last five hours</option><option value="24h">Last 24 hours</option><option value="7d" selected>Last seven days</option><option value="30d">Last 30 days</option><option value="all">All recorded history</option><option value="custom">Custom range</option></select></label>
+        <label>Device<select id="device-filter"><option value="">All devices</option></select></label>
+        <div id="custom-range" class="custom-range" hidden><label>From (UTC)<input id="from" type="datetime-local"></label><label>Until (UTC, exclusive)<input id="to" type="datetime-local"></label><button id="apply-range" class="subtle">Apply</button></div>
+        <div class="exports"><label>Export grouping<select id="export-group"><option value="events">Message metrics</option><option value="model">By model</option><option value="daily">Daily summary</option></select></label><button data-export="csv" class="subtle">CSV</button><button data-export="json" class="subtle">JSON</button></div>
+      </section>
+      <section id="quota-section" class="panel quota-panel">
+        <div class="section-heading"><div><div class="eyebrow">ACCOUNT-WIDE ALLOWANCE</div><h2>Shared subscription quota</h2></div><span class="chip">Claude Code status line</span></div>
+        <div id="quota-windows" class="quota-windows"></div>
+        <p class="footnote" id="quota-note">Unavailable until a connected HUD exports native rate limits. Local token totals never determine this allowance.</p>
+      </section>
+      <section id="overview-section">
+        <div class="section-heading"><div><div class="eyebrow">MEASURED ON YOUR DEVICES</div><h2>Recorded activity</h2></div><span id="range-caption" class="muted"></span></div>
+        <div id="stats" class="stats-grid"></div>
+        <div class="activity-strip" id="activity-windows"></div>
+        <p class="footnote">Recorded tokens include fresh input, output, cache creation and cache reads. They measure local activity, not Claude Pro quota or your subscription bill. Active sessions are inferred from recent assistant activity.</p>
+      </section>
+      <section id="devices-section">
+        <div class="section-heading"><div><div class="eyebrow">THE FLEET</div><h2>Device monitoring</h2></div><span id="fleet-status" class="muted"></span></div>
+        <div id="device-cards" class="device-grid"></div>
+      </section>
+      <section id="detail-section" class="panel" hidden><div class="section-heading"><h2 id="detail-title">Device details</h2><a href="#devices">All devices</a></div><div id="device-details"></div><h3>Recent synchronizations</h3><div class="table-wrap"><table><thead><tr><th>Time</th><th>Records received</th><th>Copied records ignored</th><th>Diagnostics</th></tr></thead><tbody id="sync-history"></tbody></table></div></section>
+      <section id="analytics-section">
+        <div class="section-heading"><div><div class="eyebrow">PATTERNS & COMPARISON</div><h2>Usage analytics</h2></div><div class="legend"><span class="input-key">Input</span><span class="output-key">Output</span><span class="creation-key">Cache creation</span><span class="read-key">Cache read</span></div></div>
+        <div class="charts-grid">
+          <article class="panel chart-wide"><h3>Daily consumption</h3><p>UTC days · all four token categories</p><div id="daily-chart" class="chart"></div></article>
+          <article class="panel"><h3>Consumption by device</h3><p>Fresh input, output and cache activity</p><div id="comparison-chart" class="chart"></div></article>
+          <article class="panel"><h3>Input vs. output</h3><p>Fresh input and generated output by device</p><div id="io-chart" class="chart"></div></article>
+          <article class="panel"><h3>Cache activity</h3><p>Cache creation and cache read tokens by device</p><div id="cache-chart" class="chart"></div></article>
+          <article class="panel"><h3>Model distribution</h3><p>Served model recorded in the transcript</p><div id="model-chart" class="chart"></div></article>
+          <article class="panel"><h3>Project distribution</h3><p>Private hashed identities or configured aliases</p><div id="project-chart" class="chart"></div></article>
+          <article class="panel chart-wide"><h3>Hourly activity</h3><p>UTC hours · latest 2,000 recorded buckets</p><div id="hourly-chart" class="chart"></div></article>
+          <article class="panel"><h3>Five-hour activity timeline</h3><p>Rolling measured activity, independent of quota reset</p><div id="five-hour-chart" class="chart"></div></article>
+          <article class="panel"><h3>Seven-day activity timeline</h3><p>Historical recorded tokens by UTC day</p><div id="seven-day-chart" class="chart"></div></article>
+        </div>
+        <article class="panel session-panel"><h3>Recorded sessions</h3><p>Hashed session IDs · latest 2,000 · selected activity range</p><div class="table-wrap"><table><thead><tr><th>Session</th><th>Input</th><th>Output</th><th>Cache creation</th><th>Cache read</th><th>Total</th><th>Last activity</th></tr></thead><tbody id="sessions"></tbody></table></div></article>
+      </section>
+      <section id="manage-section" hidden>
+        <div class="section-heading"><div><div class="eyebrow">CONNECTIONS & ACCESS</div><h2>Device management</h2></div></div>
+        <form id="enroll-form" class="panel enroll-form"><div><h3>Add a device</h3><p>Create a one-use token, valid for 15 minutes. Enter it in the collector’s enrollment prompt.</p></div><label>Device name<input id="new-device-name" required maxlength="80" placeholder="Windows-Laptop"></label><button class="primary" type="submit">Create enrollment</button><div id="enrollment-result" hidden><label>Enrollment token<input id="enrollment-token" readonly autocomplete="off" spellcheck="false"></label><p id="enrollment-expiry"></p></div></form>
+        <p class="footnote">Revocation disconnects a collector immediately. Removal archives its device card and retains all historical usage. To reconnect a revoked device, enroll a new collector identity.</p>
+        <div id="management-devices" class="management-list"></div>
+      </section>
+      <footer>CLAUDE HUD <span>Device Observatory</span><p>No conversation content is uploaded. Copied records count once and belong to their first reporter.</p></footer>
+    </main>
+  </div>
+</body>
+</html>
